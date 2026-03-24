@@ -10,9 +10,11 @@ class CategoryRepository {
   }
 
   async findById(id) {
-    return await Category.findOne({
+    const cat = await Category.findOne({
       where: { id },
     });
+
+    return cat;
   }
 
   async findByName(name) {
