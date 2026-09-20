@@ -43,10 +43,17 @@ class ProductController {
 
   async findAll(req, res) {
     try {
-      const products = await productService.findAll();
+      const { page, limit } = req.query;
+      const products = await productService.findAll({ page, limit });
 
       return res.json(products);
     } catch (error) {
+      if (error.name === "ValidationError") {
+        return res.status(400).json({
+          error: error.message,
+        });
+      }
+
       return res.status(500).json({
         error: error.message || "Internal server error",
       });

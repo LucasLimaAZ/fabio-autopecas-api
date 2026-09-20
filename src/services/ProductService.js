@@ -28,8 +28,28 @@ class ProductService {
     return await productRepository.create(data);
   }
 
-  async findAll() {
-    return await productRepository.findAll();
+  async findAll({ page = 1, limit = 10 } = {}) {
+    const parsedPage = Number(page);
+    const parsedLimit = Number(limit);
+
+    if (
+      !Number.isInteger(parsedPage) ||
+      parsedPage < 1 ||
+      !Number.isInteger(parsedLimit) ||
+      parsedLimit < 1 ||
+      parsedLimit > 100
+    ) {
+      const error = new Error(
+        "page must be a positive integer and limit must be between 1 and 100",
+      );
+      error.name = "ValidationError";
+      throw error;
+    }
+
+    return await productRepository.findAll({
+      page: parsedPage,
+      limit: parsedLimit,
+    });
   }
 
   async findById(id) {

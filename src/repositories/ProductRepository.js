@@ -17,8 +17,22 @@ class ProductRepository {
     });
   }
 
-  async findAll() {
-    return await Product.findAll();
+  async findAll({ page = 1, limit = 10 } = {}) {
+    const result = await Product.findAndCountAll({
+      limit,
+      offset: (page - 1) * limit,
+      order: [["id", "ASC"]],
+    });
+
+    return {
+      products: result.rows,
+      pagination: {
+        page,
+        limit,
+        total: result.count,
+        totalPages: Math.ceil(result.count / limit),
+      },
+    };
   }
 
   async findByCategoryId(categoryId) {
