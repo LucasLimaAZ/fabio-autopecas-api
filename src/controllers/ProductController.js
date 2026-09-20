@@ -60,6 +60,24 @@ class ProductController {
     }
   }
 
+  async search(req, res) {
+    try {
+      const products = await productService.findBySearchTerm(req.query.term);
+
+      return res.json(products);
+    } catch (error) {
+      if (error.name === "ValidationError") {
+        return res.status(400).json({
+          error: error.message,
+        });
+      }
+
+      return res.status(500).json({
+        error: error.message || "Internal server error",
+      });
+    }
+  }
+
   async findById(req, res) {
     try {
       const { id } = req.params;

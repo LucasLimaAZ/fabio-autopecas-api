@@ -17,6 +17,18 @@ class ProductRepository {
     });
   }
 
+  async findBySearchTerm(searchTerm) {
+    const { Op } = Product.sequelize.Sequelize;
+    const term = `%${searchTerm}%`;
+
+    return await Product.findAll({
+      where: {
+        [Op.or]: [{ name: { [Op.like]: term } }, { ref: { [Op.like]: term } }],
+      },
+      order: [["id", "ASC"]],
+    });
+  }
+
   async findAll({ page = 1, limit = 10 } = {}) {
     const result = await Product.findAndCountAll({
       limit,

@@ -66,6 +66,16 @@ class ProductService {
     return product;
   }
 
+  async findBySearchTerm(searchTerm) {
+    if (typeof searchTerm !== "string" || !searchTerm.trim()) {
+      const error = new Error("Search term is required");
+      error.name = "ValidationError";
+      throw error;
+    }
+
+    return await productRepository.findBySearchTerm(searchTerm.trim());
+  }
+
   async update(id, data) {
     if (!id) {
       throw new Error("Product id is required");
