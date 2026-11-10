@@ -16,7 +16,7 @@ class AuthService {
       throw new Error("Senha inválida");
     }
 
-    const token = jwt.sign({ user: user.id }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
       expiresIn: "1d",
     });
 

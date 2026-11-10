@@ -1,5 +1,5 @@
-const productRepository = require("../repositories/productRepository");
-const categoryRepository = require("../repositories/categoryRepository");
+const productRepository = require("../repositories/ProductRepository");
+const categoryRepository = require("../repositories/CategoryRepository");
 
 class ProductService {
   async create(data) {
