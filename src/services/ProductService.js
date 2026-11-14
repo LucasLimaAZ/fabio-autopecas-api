@@ -76,6 +76,10 @@ class ProductService {
     return await productRepository.findBySearchTerm(searchTerm.trim());
   }
 
+  async findLowStock() {
+    return await productRepository.findLowStock();
+  }
+
   async update(id, data) {
     if (!id) {
       throw new Error("Product id is required");

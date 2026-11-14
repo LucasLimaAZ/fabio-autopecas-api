@@ -78,6 +78,18 @@ class ProductController {
     }
   }
 
+  async findLowStock(req, res) {
+    try {
+      const products = await productService.findLowStock();
+
+      return res.json(products);
+    } catch (error) {
+      return res.status(500).json({
+        error: error.message || "Internal server error",
+      });
+    }
+  }
+
   async findById(req, res) {
     try {
       const { id } = req.params;

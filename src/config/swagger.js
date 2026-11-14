@@ -196,6 +196,21 @@ const swaggerDefinition = {
           updatedAt: { type: "string", format: "date-time" },
         },
       },
+      HomeStats: {
+        type: "object",
+        required: [
+          "totalProducts",
+          "totalSales",
+          "totalUsers",
+          "lowStockProducts",
+        ],
+        properties: {
+          totalProducts: { type: "integer", example: 128 },
+          totalSales: { type: "integer", example: 64 },
+          totalUsers: { type: "integer", example: 25 },
+          lowStockProducts: { type: "integer", example: 9 },
+        },
+      },
     },
   },
 };

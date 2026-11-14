@@ -127,6 +127,32 @@ router.get("/search", authMiddleware, productController.search);
 
 /**
  * @openapi
+ * /product/low-stock:
+ *   get:
+ *     tags: [Products]
+ *     summary: Lista produtos com estoque abaixo do mínimo
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Produtos com amount menor que minimum_amount
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Product'
+ *       401:
+ *         description: Token ausente ou inválido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+router.get("/low-stock", authMiddleware, productController.findLowStock);
+
+/**
+ * @openapi
  * /product/{id}:
  *   get:
  *     tags: [Products]

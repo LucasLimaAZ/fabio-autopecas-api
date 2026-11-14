@@ -1,8 +1,18 @@
-const { Product } = require("../database/models");
+const { Product, sequelize } = require("../database/models");
 
 class ProductRepository {
   async create(data) {
     return await Product.create(data);
+  }
+
+  async findLowStock() {
+    return await Product.findAll({
+      where: sequelize.literal("amount < minimum_amount"),
+      order: [
+        ["amount", "ASC"],
+        ["minimum_amount", "ASC"],
+      ],
+    });
   }
 
   async findById(id) {

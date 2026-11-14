@@ -4,4 +4,5 @@ module.exports = {
   categoryService: require("./CategoryService"),
   productService: require("./ProductService"),
   saleService: require("./SaleService"),
+  homeService: require("./HomeService"),
 };
