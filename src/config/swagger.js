@@ -166,6 +166,12 @@ const swaggerDefinition = {
               properties: {
                 product_id: { type: "integer", example: 10 },
                 quantity: { type: "integer", example: 2 },
+                unit_price: {
+                  type: "number",
+                  example: 29.9,
+                  description:
+                    "Preço promocional ou com desconto para este item. Se não informado, usa o preço do produto.",
+                },
               },
             },
           },

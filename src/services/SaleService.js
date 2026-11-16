@@ -128,39 +128,61 @@ class SaleService {
   }
 
   async calculateSaleItems(items, transaction) {
-    const quantities = new Map();
+    const groupedItems = new Map();
+
     for (const item of items) {
-      quantities.set(
-        item.product_id,
-        (quantities.get(item.product_id) || 0) + item.quantity,
-      );
+      const normalizedUnitPrice =
+        item.unit_price ?? item.price ?? item.value ?? item.valor;
+      const key =
+        normalizedUnitPrice !== undefined && normalizedUnitPrice !== null
+          ? `${item.product_id}:${Number(normalizedUnitPrice).toFixed(2)}`
+          : `${item.product_id}`;
+
+      if (!groupedItems.has(key)) {
+        groupedItems.set(key, {
+          product_id: item.product_id,
+          quantity: 0,
+          unit_price:
+            normalizedUnitPrice !== undefined && normalizedUnitPrice !== null
+              ? Number(normalizedUnitPrice)
+              : undefined,
+        });
+      }
+
+      groupedItems.get(key).quantity += item.quantity;
     }
 
     const saleItems = [];
     let totalInCents = 0;
     const now = new Date();
 
-    for (const [productId, quantity] of [...quantities].sort(
-      ([firstId], [secondId]) => firstId - secondId,
+    for (const groupedItem of [...groupedItems.values()].sort(
+      (first, second) => first.product_id - second.product_id,
     )) {
-      const product = await Product.findByPk(productId, {
+      const product = await Product.findByPk(groupedItem.product_id, {
         transaction,
         lock: transaction.LOCK.UPDATE,
       });
 
       if (!product) {
-        const error = new Error(`Product ${productId} not found`);
+        const error = new Error(`Product ${groupedItem.product_id} not found`);
         error.name = "ValidationError";
         throw error;
       }
-      if (product.amount < quantity) {
+      if (product.amount < groupedItem.quantity) {
         const error = new Error(
-          `Insufficient stock for product ${product.name}. Available: ${product.amount}; requested: ${quantity}`,
+          `Insufficient stock for product ${product.name}. Available: ${product.amount}; requested: ${groupedItem.quantity}`,
         );
         error.name = "InsufficientStockError";
         throw error;
       }
-      if (product.sale_price === null) {
+
+      const effectiveUnitPrice =
+        groupedItem.unit_price !== undefined
+          ? groupedItem.unit_price
+          : product.sale_price;
+
+      if (effectiveUnitPrice === null || effectiveUnitPrice === undefined) {
         const error = new Error(
           `Product ${product.name} does not have a sale price`,
         );
@@ -168,14 +190,23 @@ class SaleService {
         throw error;
       }
 
-      const unitPriceInCents = Math.round(Number(product.sale_price) * 100);
-      const subtotalInCents = unitPriceInCents * quantity;
+      const normalizedUnitPrice = Number(effectiveUnitPrice);
+      if (!Number.isFinite(normalizedUnitPrice) || normalizedUnitPrice < 0) {
+        const error = new Error(
+          `Invalid unit price for product ${product.name}`,
+        );
+        error.name = "ValidationError";
+        throw error;
+      }
+
+      const unitPriceInCents = Math.round(normalizedUnitPrice * 100);
+      const subtotalInCents = unitPriceInCents * groupedItem.quantity;
       totalInCents += subtotalInCents;
-      product.amount -= quantity;
+      product.amount -= groupedItem.quantity;
       await product.save({ transaction });
       saleItems.push({
         product_id: product.id,
-        quantity,
+        quantity: groupedItem.quantity,
         unit_price: (unitPriceInCents / 100).toFixed(2),
         subtotal: (subtotalInCents / 100).toFixed(2),
         createdAt: now,
@@ -222,6 +253,26 @@ class SaleService {
         );
         error.name = "ValidationError";
         throw error;
+      }
+
+      const unitPrice =
+        item.unit_price ?? item.price ?? item.value ?? item.valor;
+      if (unitPrice !== undefined && unitPrice !== null) {
+        const numericUnitPrice = Number(unitPrice);
+
+        if (
+          (typeof unitPrice === "string" && unitPrice.trim() === "") ||
+          !Number.isFinite(numericUnitPrice) ||
+          numericUnitPrice < 0
+        ) {
+          const error = new Error(
+            "If informed, the item price must be a non-negative number",
+          );
+          error.name = "ValidationError";
+          throw error;
+        }
+
+        item.unit_price = numericUnitPrice;
       }
 
       item.product_id = Number(item.product_id);
