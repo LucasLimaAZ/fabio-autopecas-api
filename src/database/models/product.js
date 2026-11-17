@@ -70,6 +70,15 @@ module.exports = (sequelize, DataTypes) => {
         },
       },
 
+      status: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        defaultValue: "active",
+        validate: {
+          isIn: [["active", "archived"]],
+        },
+      },
+
       category_id: {
         type: DataTypes.INTEGER,
         allowNull: false,

@@ -248,7 +248,7 @@ router.patch("/:id", authMiddleware, productController.update);
  *         description: ID do produto
  *     responses:
  *       204:
- *         description: Produto removido com sucesso
+ *         description: Produto arquivado com sucesso
  *       400:
  *         description: Dados inválidos
  *         content:

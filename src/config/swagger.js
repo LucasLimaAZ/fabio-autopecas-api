@@ -99,7 +99,7 @@ const swaggerDefinition = {
       },
       Product: {
         type: "object",
-        required: ["id", "name", "ref", "category_id"],
+        required: ["id", "name", "ref", "category_id", "status"],
         properties: {
           id: { type: "integer", example: 10 },
           name: { type: "string", example: "Filtro de Óleo" },
@@ -113,6 +113,11 @@ const swaggerDefinition = {
           sale_price: { type: "number", example: 39.9 },
           amount: { type: "integer", example: 50 },
           minimum_amount: { type: "integer", example: 5 },
+          status: {
+            type: "string",
+            enum: ["active", "archived"],
+            example: "active",
+          },
           category_id: { type: "integer", example: 3 },
           createdAt: { type: "string", format: "date-time" },
           updatedAt: { type: "string", format: "date-time" },
@@ -272,19 +277,78 @@ const swaggerDefinition = {
           totalRevenue: { type: "string", example: "12450.75" },
         },
       },
+      DashboardLowStockProduct: {
+        type: "object",
+        required: [
+          "id",
+          "name",
+          "ref",
+          "amount",
+          "minimum_amount",
+          "missing_amount",
+        ],
+        properties: {
+          id: { type: "integer", example: 10 },
+          name: { type: "string", example: "Filtro de Óleo" },
+          ref: { type: "string", example: "FLT-001" },
+          category_id: { type: "integer", example: 2 },
+          amount: { type: "integer", example: 3 },
+          minimum_amount: { type: "integer", example: 10 },
+          missing_amount: { type: "integer", example: 7 },
+          sale_price: { type: "string", example: "39.90" },
+        },
+      },
+      DashboardTopProduct: {
+        type: "object",
+        required: ["rank", "product_id", "name", "ref", "total_quantity"],
+        properties: {
+          rank: { type: "integer", example: 1 },
+          product_id: { type: "integer", example: 10 },
+          name: { type: "string", example: "Filtro de Óleo" },
+          ref: { type: "string", example: "FLT-001" },
+          category_id: { type: "integer", example: 2 },
+          amount: { type: "integer", example: 42 },
+          sale_price: { type: "string", example: "39.90" },
+          total_quantity: { type: "integer", example: 24 },
+          total_amount: { type: "string", example: "957.60" },
+        },
+      },
       HomeStats: {
         type: "object",
         required: [
-          "totalProducts",
-          "totalSales",
-          "totalUsers",
+          "totalSalesToday",
           "lowStockProducts",
+          "topSellingProducts",
+          "topSellingPeriod",
         ],
         properties: {
-          totalProducts: { type: "integer", example: 128 },
-          totalSales: { type: "integer", example: 64 },
-          totalUsers: { type: "integer", example: 25 },
-          lowStockProducts: { type: "integer", example: 9 },
+          totalSalesToday: { type: "integer", example: 6 },
+          lowStockProducts: {
+            type: "array",
+            maxItems: 5,
+            items: { $ref: "#/components/schemas/DashboardLowStockProduct" },
+          },
+          topSellingProducts: {
+            type: "array",
+            maxItems: 5,
+            items: { $ref: "#/components/schemas/DashboardTopProduct" },
+          },
+          topSellingPeriod: {
+            type: "object",
+            required: ["startDate", "endDate"],
+            properties: {
+              startDate: {
+                type: "string",
+                format: "date",
+                example: "2026-10-19",
+              },
+              endDate: {
+                type: "string",
+                format: "date",
+                example: "2026-11-17",
+              },
+            },
+          },
         },
       },
       SoldProductItem: {

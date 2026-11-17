@@ -139,7 +139,7 @@ class ProductService {
       throw new Error("Product not found");
     }
 
-    await productRepository.delete(id);
+    await productRepository.archive(id);
   }
 }
 

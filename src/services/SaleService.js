@@ -377,6 +377,11 @@ class SaleService {
         error.name = "ValidationError";
         throw error;
       }
+      if (product.status === "archived") {
+        const error = new Error(`Product ${product.name} is archived`);
+        error.name = "ValidationError";
+        throw error;
+      }
       if (product.amount < groupedItem.quantity) {
         const error = new Error(
           `Insufficient stock for product ${product.name}. Available: ${product.amount}; requested: ${groupedItem.quantity}`,

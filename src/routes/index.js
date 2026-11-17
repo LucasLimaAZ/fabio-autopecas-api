@@ -15,7 +15,7 @@ router.get("/", (req, res) =>
 
 /**
  * @openapi
- * /home:
+ * /dashboard:
  *   get:
  *     tags: [Dashboard]
  *     summary: Retorna estatísticas gerais da home page
@@ -35,7 +35,7 @@ router.get("/", (req, res) =>
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get("/home", authMiddleware, homeController.getStats);
+router.get("/dashboard", authMiddleware, homeController.getStats);
 router.use("/user", userRoutes);
 router.use("/auth", authRoutes);
 router.use("/product", productRoutes);

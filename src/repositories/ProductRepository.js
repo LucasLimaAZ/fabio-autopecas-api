@@ -7,7 +7,12 @@ class ProductRepository {
 
   async findLowStock() {
     return await Product.findAll({
-      where: sequelize.literal("amount < minimum_amount"),
+      where: {
+        status: "active",
+        [sequelize.Sequelize.Op.and]: sequelize.literal(
+          "amount < minimum_amount",
+        ),
+      },
       order: [
         ["amount", "ASC"],
         ["minimum_amount", "ASC"],
@@ -33,6 +38,7 @@ class ProductRepository {
 
     return await Product.findAll({
       where: {
+        status: "active",
         [Op.or]: [{ name: { [Op.like]: term } }, { ref: { [Op.like]: term } }],
       },
       order: [["id", "ASC"]],
@@ -41,6 +47,7 @@ class ProductRepository {
 
   async findAll({ page = 1, limit = 10 } = {}) {
     const result = await Product.findAndCountAll({
+      where: { status: "active" },
       limit,
       offset: (page - 1) * limit,
       order: [["id", "ASC"]],
@@ -59,7 +66,7 @@ class ProductRepository {
 
   async findByCategoryId(categoryId) {
     return await Product.findAll({
-      where: { category_id: categoryId },
+      where: { category_id: categoryId, status: "active" },
     });
   }
 
@@ -71,10 +78,10 @@ class ProductRepository {
     return await this.findById(id);
   }
 
-  async delete(id) {
-    return await Product.destroy({
-      where: { id },
-    });
+  async archive(id) {
+    await Product.update({ status: "archived" }, { where: { id } });
+
+    return await this.findById(id);
   }
 }
 
