@@ -88,6 +88,156 @@ router.get("/", authMiddleware, saleController.findAll);
 
 /**
  * @openapi
+ * /sale/report/products:
+ *   get:
+ *     tags: [Reports]
+ *     summary: Consulta os produtos vendidos em um intervalo de datas
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: startDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *       - in: query
+ *         name: endDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *     responses:
+ *       200:
+ *         description: Produtos vendidos consolidados por período
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ProductsSoldReport'
+ *       400:
+ *         description: Intervalo de datas inválido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+router.get(
+  "/report/products",
+  authMiddleware,
+  saleController.getProductsSoldByDateRange,
+);
+
+/**
+ * @openapi
+ * /sale/report/top-products:
+ *   get:
+ *     tags: [Reports]
+ *     summary: Consulta os produtos mais vendidos por semana, mês ou ano
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: period
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum: [week, month, year]
+ *       - in: query
+ *         name: year
+ *         schema:
+ *           type: integer
+ *           example: 2026
+ *       - in: query
+ *         name: month
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 12
+ *       - in: query
+ *         name: week
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 53
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 10
+ *     responses:
+ *       200:
+ *         description: Ranking dos produtos mais vendidos
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/TopProductsReport'
+ *       400:
+ *         description: Parâmetros inválidos
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+router.get(
+  "/report/top-products",
+  authMiddleware,
+  saleController.getTopProductsByPeriod,
+);
+
+/**
+ * @openapi
+ * /sale/report/revenue:
+ *   get:
+ *     tags: [Reports]
+ *     summary: Consulta o total faturado em um intervalo de datas
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: startDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *       - in: query
+ *         name: endDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *     responses:
+ *       200:
+ *         description: Valor total faturado do período
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/RevenueReport'
+ *       400:
+ *         description: Intervalo de datas inválido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+router.get(
+  "/report/revenue",
+  authMiddleware,
+  saleController.getTotalRevenueByDateRange,
+);
+
+/**
+ * @openapi
  * /sale/{id}:
  *   get:
  *     tags: [Sales]

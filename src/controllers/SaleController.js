@@ -36,6 +36,50 @@ class SaleController {
     }
   }
 
+  async getProductsSoldByDateRange(req, res) {
+    try {
+      return res.json(
+        await saleService.getProductsSoldByDateRange({
+          startDate: req.query.startDate,
+          endDate: req.query.endDate,
+        }),
+      );
+    } catch (error) {
+      return this.handleError(error, res);
+    }
+  }
+
+  async getTopProductsByPeriod(req, res) {
+    try {
+      return res.json(
+        await saleService.getTopProductsByPeriod({
+          period: req.query.period,
+          year: req.query.year,
+          month: req.query.month,
+          week: req.query.week,
+          limit: req.query.limit,
+          startDate: req.query.startDate,
+          endDate: req.query.endDate,
+        }),
+      );
+    } catch (error) {
+      return this.handleError(error, res);
+    }
+  }
+
+  async getTotalRevenueByDateRange(req, res) {
+    try {
+      return res.json(
+        await saleService.getTotalRevenueByDateRange({
+          startDate: req.query.startDate,
+          endDate: req.query.endDate,
+        }),
+      );
+    } catch (error) {
+      return this.handleError(error, res);
+    }
+  }
+
   async findById(req, res) {
     try {
       return res.json(await saleService.findById(req.params.id));

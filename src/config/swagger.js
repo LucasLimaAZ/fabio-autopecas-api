@@ -202,6 +202,75 @@ const swaggerDefinition = {
           updatedAt: { type: "string", format: "date-time" },
         },
       },
+      ProductSalesSummary: {
+        type: "object",
+        required: [
+          "product_id",
+          "product_name",
+          "ref",
+          "total_quantity",
+          "total_amount",
+        ],
+        properties: {
+          product_id: { type: "integer", example: 10 },
+          product_name: { type: "string", example: "Filtro de Óleo" },
+          ref: { type: "string", example: "FLT-001" },
+          category_id: { type: "integer", example: 2 },
+          total_quantity: { type: "integer", example: 12 },
+          total_amount: { type: "string", example: "479.60" },
+          average_unit_price: { type: "string", example: "39.97" },
+        },
+      },
+      ProductsSoldReport: {
+        type: "object",
+        required: [
+          "startDate",
+          "endDate",
+          "totalSales",
+          "totalProducts",
+          "items",
+        ],
+        properties: {
+          startDate: { type: "string", format: "date", example: "2026-11-01" },
+          endDate: { type: "string", format: "date", example: "2026-11-30" },
+          totalSales: { type: "integer", example: 18 },
+          totalProducts: { type: "integer", example: 6 },
+          items: {
+            type: "array",
+            items: { $ref: "#/components/schemas/ProductSalesSummary" },
+          },
+        },
+      },
+      TopProductsReport: {
+        type: "object",
+        required: ["period", "startDate", "endDate", "items"],
+        properties: {
+          period: {
+            type: "string",
+            enum: ["week", "month", "year"],
+            example: "month",
+          },
+          startDate: { type: "string", format: "date", example: "2026-11-01" },
+          endDate: { type: "string", format: "date", example: "2026-11-30" },
+          limit: { type: "integer", example: 10 },
+          totalSales: { type: "integer", example: 18 },
+          totalProducts: { type: "integer", example: 5 },
+          items: {
+            type: "array",
+            items: { $ref: "#/components/schemas/ProductSalesSummary" },
+          },
+        },
+      },
+      RevenueReport: {
+        type: "object",
+        required: ["startDate", "endDate", "totalSales", "totalRevenue"],
+        properties: {
+          startDate: { type: "string", format: "date", example: "2026-11-01" },
+          endDate: { type: "string", format: "date", example: "2026-11-30" },
+          totalSales: { type: "integer", example: 18 },
+          totalRevenue: { type: "string", example: "12450.75" },
+        },
+      },
       HomeStats: {
         type: "object",
         required: [

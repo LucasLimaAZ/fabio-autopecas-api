@@ -1,5 +1,12 @@
-const { Product, Sale, User, sequelize } = require("../database/models");
+const {
+  Product,
+  Sale,
+  User,
+  SaleItem,
+  sequelize,
+} = require("../database/models");
 const saleRepository = require("../repositories/SaleRepository");
+const { Op } = require("sequelize");
 
 class SaleService {
   async create({ items, sale_date, notes } = {}, userId) {
@@ -63,6 +70,156 @@ class SaleService {
     }
 
     return sale;
+  }
+
+  async getProductsSoldByDateRange({ startDate, endDate } = {}) {
+    const { startDate: normalizedStart, endDate: normalizedEnd } =
+      this.validateDateRange(startDate, endDate);
+
+    const sales = await Sale.findAll({
+      where: {
+        sale_date: {
+          [Op.between]: [normalizedStart, normalizedEnd],
+        },
+      },
+      attributes: ["id", "sale_date", "total_amount"],
+      include: [
+        {
+          model: SaleItem,
+          as: "items",
+          include: [{ model: Product, as: "product" }],
+        },
+      ],
+    });
+
+    const productMap = new Map();
+
+    for (const sale of sales) {
+      for (const item of sale.items || []) {
+        if (!item?.product) continue;
+
+        const productId = Number(item.product.id);
+        const entry =
+          productMap.get(productId) ||
+          (productMap.set(productId, {
+            product_id: productId,
+            product_name: item.product.name,
+            ref: item.product.ref,
+            category_id: item.product.category_id,
+            total_quantity: 0,
+            total_amount: 0,
+          }),
+          productMap.get(productId));
+
+        entry.total_quantity += Number(item.quantity || 0);
+        entry.total_amount += Number(item.subtotal || 0);
+      }
+    }
+
+    const items = [...productMap.values()]
+      .map((item) => ({
+        ...item,
+        total_amount: Number(item.total_amount).toFixed(2),
+        average_unit_price:
+          item.total_quantity > 0
+            ? (Number(item.total_amount) / item.total_quantity).toFixed(2)
+            : "0.00",
+      }))
+      .sort((first, second) => second.total_quantity - first.total_quantity);
+
+    return {
+      startDate: normalizedStart,
+      endDate: normalizedEnd,
+      totalSales: sales.length,
+      totalProducts: items.length,
+      items,
+    };
+  }
+
+  async getTopProductsByPeriod({
+    period = "month",
+    year,
+    month,
+    week,
+    limit = 10,
+    startDate,
+    endDate,
+  } = {}) {
+    const normalizedPeriod = String(period).toLowerCase();
+    const validPeriods = ["week", "month", "year"];
+
+    if (!validPeriods.includes(normalizedPeriod)) {
+      const error = new Error("period must be one of: week, month or year");
+      error.name = "ValidationError";
+      throw error;
+    }
+
+    const normalizedLimit = Number(limit);
+    if (!Number.isInteger(normalizedLimit) || normalizedLimit < 1) {
+      const error = new Error("limit must be a positive integer");
+      error.name = "ValidationError";
+      throw error;
+    }
+
+    let range;
+    if (startDate || endDate) {
+      range = this.validateDateRange(startDate, endDate);
+    } else if (normalizedPeriod === "year") {
+      range = this.resolveYearRange(Number(year));
+    } else if (normalizedPeriod === "month") {
+      range = this.resolveMonthRange(Number(year), Number(month));
+    } else {
+      range = this.resolveWeekRange(Number(year), Number(week));
+    }
+
+    const report = await this.getProductsSoldByDateRange(range);
+    const topProducts = [...report.items]
+      .sort(
+        (first, second) =>
+          second.total_quantity - first.total_quantity ||
+          Number(second.total_amount) - Number(first.total_amount),
+      )
+      .slice(0, normalizedLimit)
+      .map((item, index) => ({
+        rank: index + 1,
+        ...item,
+      }));
+
+    return {
+      period: normalizedPeriod,
+      startDate: range.startDate,
+      endDate: range.endDate,
+      limit: normalizedLimit,
+      totalSales: report.totalSales,
+      totalProducts: topProducts.length,
+      items: topProducts,
+    };
+  }
+
+  async getTotalRevenueByDateRange({ startDate, endDate } = {}) {
+    const { startDate: normalizedStart, endDate: normalizedEnd } =
+      this.validateDateRange(startDate, endDate);
+
+    const sales = await Sale.findAll({
+      where: {
+        sale_date: {
+          [Op.between]: [normalizedStart, normalizedEnd],
+        },
+      },
+      attributes: ["total_amount"],
+    });
+
+    const totalRevenue = sales.reduce(
+      (sum, sale) => sum + Number(sale.total_amount || 0),
+      0,
+    );
+
+    return {
+      startDate: normalizedStart,
+      endDate: normalizedEnd,
+      totalSales: sales.length,
+      totalRevenue: totalRevenue.toFixed(2),
+    };
   }
 
   async update(id, { items } = {}) {
@@ -215,6 +372,133 @@ class SaleService {
     }
 
     return { items: saleItems, total: (totalInCents / 100).toFixed(2) };
+  }
+
+  validateDateRange(startDate, endDate) {
+    const normalizedStart = this.parseDateString(startDate, "startDate");
+    const normalizedEnd = this.parseDateString(endDate, "endDate");
+
+    if (normalizedStart > normalizedEnd) {
+      const error = new Error(
+        "startDate must be earlier than or equal to endDate",
+      );
+      error.name = "ValidationError";
+      throw error;
+    }
+
+    return {
+      startDate: normalizedStart,
+      endDate: normalizedEnd,
+    };
+  }
+
+  resolveYearRange(year) {
+    const normalizedYear = Number(year ?? new Date().getFullYear());
+    if (!Number.isInteger(normalizedYear) || normalizedYear < 1970) {
+      const error = new Error("year must be a valid integer");
+      error.name = "ValidationError";
+      throw error;
+    }
+
+    return {
+      startDate: `${normalizedYear}-01-01`,
+      endDate: `${normalizedYear}-12-31`,
+    };
+  }
+
+  resolveMonthRange(year, month) {
+    const normalizedYear = Number(year ?? new Date().getFullYear());
+    const normalizedMonth = Number(month ?? new Date().getMonth() + 1);
+
+    if (!Number.isInteger(normalizedYear) || normalizedYear < 1970) {
+      const error = new Error("year must be a valid integer");
+      error.name = "ValidationError";
+      throw error;
+    }
+
+    if (
+      !Number.isInteger(normalizedMonth) ||
+      normalizedMonth < 1 ||
+      normalizedMonth > 12
+    ) {
+      const error = new Error("month must be an integer between 1 and 12");
+      error.name = "ValidationError";
+      throw error;
+    }
+
+    const firstDay = new Date(Date.UTC(normalizedYear, normalizedMonth - 1, 1));
+    const lastDay = new Date(Date.UTC(normalizedYear, normalizedMonth, 0));
+
+    return {
+      startDate: firstDay.toISOString().slice(0, 10),
+      endDate: lastDay.toISOString().slice(0, 10),
+    };
+  }
+
+  resolveWeekRange(year, week) {
+    const normalizedYear = Number(year ?? new Date().getFullYear());
+    const normalizedWeek = Number(week ?? 1);
+
+    if (!Number.isInteger(normalizedYear) || normalizedYear < 1970) {
+      const error = new Error("year must be a valid integer");
+      error.name = "ValidationError";
+      throw error;
+    }
+
+    if (
+      !Number.isInteger(normalizedWeek) ||
+      normalizedWeek < 1 ||
+      normalizedWeek > 53
+    ) {
+      const error = new Error("week must be an integer between 1 and 53");
+      error.name = "ValidationError";
+      throw error;
+    }
+
+    const date = new Date(Date.UTC(normalizedYear, 0, 4));
+    const day = date.getUTCDay() || 7;
+    const startOfWeek = new Date(date);
+    startOfWeek.setUTCDate(
+      date.getUTCDate() - day + 1 + (normalizedWeek - 1) * 7,
+    );
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setUTCDate(startOfWeek.getUTCDate() + 6);
+
+    return {
+      startDate: startOfWeek.toISOString().slice(0, 10),
+      endDate: endOfWeek.toISOString().slice(0, 10),
+    };
+  }
+
+  parseDateString(dateValue, fieldName) {
+    if (
+      typeof dateValue !== "string" ||
+      !/^\d{4}-\d{2}-\d{2}$/.test(dateValue)
+    ) {
+      const error = new Error(
+        `${fieldName} must be a valid date in YYYY-MM-DD format`,
+      );
+      error.name = "ValidationError";
+      throw error;
+    }
+
+    const timestamp = Date.parse(`${dateValue}T00:00:00Z`);
+    if (Number.isNaN(timestamp)) {
+      const error = new Error(
+        `${fieldName} must be a valid date in YYYY-MM-DD format`,
+      );
+      error.name = "ValidationError";
+      throw error;
+    }
+
+    const normalizedDate = new Date(timestamp).toISOString().slice(0, 10);
+    if (normalizedDate !== dateValue) {
+      const error = new Error(`${fieldName} must be a valid calendar date`);
+      error.name = "ValidationError";
+      throw error;
+    }
+
+    return normalizedDate;
   }
 
   validatePagination(page, limit) {
