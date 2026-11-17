@@ -42,6 +42,7 @@ class SaleController {
         await saleService.getProductsSoldByDateRange({
           startDate: req.query.startDate,
           endDate: req.query.endDate,
+          page: req.query.page,
         }),
       );
     } catch (error) {
@@ -53,10 +54,6 @@ class SaleController {
     try {
       return res.json(
         await saleService.getTopProductsByPeriod({
-          period: req.query.period,
-          year: req.query.year,
-          month: req.query.month,
-          week: req.query.week,
           limit: req.query.limit,
           startDate: req.query.startDate,
           endDate: req.query.endDate,

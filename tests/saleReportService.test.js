@@ -75,13 +75,17 @@ const { Sale } = require("../src/database/models");
     const productsReport = await saleService.getProductsSoldByDateRange({
       startDate: "2026-11-01",
       endDate: "2026-11-30",
+      page: 1,
     });
 
-    assert.strictEqual(productsReport.items.length, 2);
+    assert.strictEqual(productsReport.limit, 20);
+    assert.strictEqual(productsReport.page, 1);
+    assert.strictEqual(productsReport.totalItems, 3);
+    assert.strictEqual(productsReport.items.length, 3);
     assert.strictEqual(productsReport.items[0].product_name, "Filtro de Óleo");
-    assert.strictEqual(productsReport.items[0].total_quantity, 3);
-    assert.strictEqual(productsReport.items[0].total_amount, "119.70");
-    assert.strictEqual(productsReport.items[1].product_name, "Vela");
+    assert.strictEqual(productsReport.items[0].quantity, 1);
+    assert.strictEqual(productsReport.items[1].product_name, "Filtro de Óleo");
+    assert.strictEqual(productsReport.items[2].product_name, "Vela");
 
     const revenueReport = await saleService.getTotalRevenueByDateRange({
       startDate: "2026-11-01",
@@ -92,13 +96,12 @@ const { Sale } = require("../src/database/models");
     assert.strictEqual(revenueReport.totalSales, 2);
 
     const topProducts = await saleService.getTopProductsByPeriod({
-      period: "month",
-      year: 2026,
-      month: 11,
+      startDate: "2026-11-01",
+      endDate: "2026-11-30",
       limit: 5,
     });
 
-    assert.strictEqual(topProducts.period, "month");
+    assert.strictEqual(topProducts.period, undefined);
     assert.strictEqual(topProducts.items[0].product_name, "Filtro de Óleo");
     assert.strictEqual(topProducts.items[0].total_quantity, 3);
   } finally {

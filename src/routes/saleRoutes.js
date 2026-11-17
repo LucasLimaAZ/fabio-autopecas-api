@@ -107,6 +107,13 @@ router.get("/", authMiddleware, saleController.findAll);
  *         schema:
  *           type: string
  *           format: date
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Página com 20 itens, ordenada pela data da venda mais recente
  *     responses:
  *       200:
  *         description: Produtos vendidos consolidados por período
@@ -132,40 +139,19 @@ router.get(
  * /sale/report/top-products:
  *   get:
  *     tags: [Reports]
- *     summary: Consulta os produtos mais vendidos por semana, mês ou ano
+ *     summary: Consulta os produtos mais vendidos em um intervalo de datas
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: query
- *         name: period
- *         required: true
- *         schema:
- *           type: string
- *           enum: [week, month, year]
- *       - in: query
- *         name: year
- *         schema:
- *           type: integer
- *           example: 2026
- *       - in: query
- *         name: month
- *         schema:
- *           type: integer
- *           minimum: 1
- *           maximum: 12
- *       - in: query
- *         name: week
- *         schema:
- *           type: integer
- *           minimum: 1
- *           maximum: 53
- *       - in: query
  *         name: startDate
+ *         required: true
  *         schema:
  *           type: string
  *           format: date
  *       - in: query
  *         name: endDate
+ *         required: true
  *         schema:
  *           type: string
  *           format: date
@@ -174,6 +160,7 @@ router.get(
  *         schema:
  *           type: integer
  *           minimum: 1
+ *           maximum: 10
  *           default: 10
  *     responses:
  *       200:
