@@ -372,6 +372,17 @@ const swaggerDefinition = {
           subtotal: { type: "string", example: "79.80" },
         },
       },
+      LowStockReport: {
+        type: "object",
+        required: ["totalProducts", "items"],
+        properties: {
+          totalProducts: { type: "integer", example: 4 },
+          items: {
+            type: "array",
+            items: { $ref: "#/components/schemas/DashboardLowStockProduct" },
+          },
+        },
+      },
     },
   },
 };

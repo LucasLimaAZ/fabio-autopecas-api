@@ -570,6 +570,40 @@ class SaleService {
       throw error;
     }
   }
+
+  async getLowStockProducts() {
+    const products = await Product.findAll({
+      where: {
+        [Op.and]: sequelize.literal("amount < minimum_amount"),
+      },
+      order: [
+        ["amount", "ASC"],
+        ["minimum_amount", "DESC"],
+        ["name", "ASC"],
+      ],
+    });
+
+    const items = products.map((product) => {
+      const record =
+        typeof product.get === "function"
+          ? product.get({ plain: true })
+          : { ...product };
+      const amount = Number(record.amount);
+      const minimumAmount = Number(record.minimum_amount);
+
+      return {
+        ...record,
+        amount,
+        minimum_amount: minimumAmount,
+        missing_amount: Math.max(minimumAmount - amount, 0),
+      };
+    });
+
+    return {
+      totalProducts: items.length,
+      items,
+    };
+  }
 }
 
 module.exports = new SaleService();

@@ -225,6 +225,34 @@ router.get(
 
 /**
  * @openapi
+ * /sale/report/low-stock:
+ *   get:
+ *     tags: [Reports]
+ *     summary: Lista todos os produtos com estoque abaixo do mínimo
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Produtos com amount menor que minimum_amount
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/LowStockReport'
+ *       401:
+ *         description: Token ausente ou inválido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+router.get(
+  "/report/low-stock",
+  authMiddleware,
+  saleController.getLowStockProducts,
+);
+
+/**
+ * @openapi
  * /sale/{id}:
  *   get:
  *     tags: [Sales]

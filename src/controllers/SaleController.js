@@ -102,6 +102,14 @@ class SaleController {
     }
   }
 
+  async getLowStockProducts(req, res) {
+    try {
+      return res.json(await saleService.getLowStockProducts());
+    } catch (error) {
+      return this.handleError(error, res);
+    }
+  }
+
   handleError(error, res) {
     if (error.name === "ValidationError") {
       return res.status(400).json({ error: error.message });
